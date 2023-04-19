@@ -20,24 +20,33 @@ def prep_titanic(df):
     return df
 
 def prep_telco(df):
-    df=df.drop(columns=['partner','dependents','internet_service_type_id','multiple_lines',
-                    'online_backup','payment_type_id'])
-    telco_dummies=pd.get_dummies(df[['gender','phone_service','online_security','device_protection','tech_support','streaming_tv','churn']],drop_first=True)
-    df=pd.concat([df,telco_dummies],axis=1)
+    df=df.drop(columns=['internet_service_type_id', 'contract_type_id', 'payment_type_id'])
+    df['gender_encoded'] = df.gender.map({'Female': 1, 'Male': 0})
+    df['partner_encoded'] = df.partner.map({'Yes': 1, 'No': 0})
+    df['dependents_encoded'] = df.dependents.map({'Yes': 1, 'No': 0})
+    df['phone_service_encoded'] = df.phone_service.map({'Yes': 1, 'No': 0})
+    df['paperless_billing_encoded'] = df.paperless_billing.map({'Yes': 1, 'No': 0})
+    df['churn_encoded'] = df.churn.map({'Yes': 1, 'No': 0})
+    
+    
+    dummy_df = pd.get_dummies(df[['multiple_lines', 'online_security', 'online_backup','device_protection',  'tech_support', 'streaming_tv', 'streaming_movies', 'contract_type',  'internet_service_type','payment_type']],
+                                  drop_first=True)
+    
+    df = pd.concat( [df,dummy_df], axis=1 )
+    
+    df.total_charges = df.total_charges.str.replace(' ', '0').astype(float)
+    
     return df
 
 
 
 
 
-def split_data(df):
-  
-    train, test= train_test_split(df,
-                                   test_size=.2, 
-                                   random_state=123, 
-                                   )
-    train, validate = train_test_split(train,
-                                       test_size=.25, 
-                                       random_state=123, 
-                                       )
+def split_data(df,variable):
+    train, test = train_test_split(df,
+                                   random_state=123, test_size=.20, stratify= df[variable])
+    train, validate = train_test_split(train, random_state=123, test_size=.25, stratify= train[variable])
     return train, validate, test
+
+
+    
